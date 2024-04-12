@@ -1,0 +1,44 @@
+import os
+import sys
+import configparser
+import anthropic
+import re
+
+# 設定ファイルを読み込む
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# APIキーを設定ファイルから取得し、環境変数にセット
+api_key = config.get('anthropic', 'api_key')
+os.environ["ANTHROPIC_API_KEY"] = api_key
+
+# システムプロンプトを設定ファイルから読み込む
+with open(config.get('system_prompt', 'system_prompt'), 'r') as f:
+    system_prompt = f.read()
+
+# Anthropic APIクライアントを初期化  
+client = anthropic.Anthropic()
+
+# チャットループ
+while True:
+    try:
+        # ユーザーからの入力を取得
+        user_input = input("あなた: ")
+        
+        # APIにリクエストを送信
+        response = client.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=1000,
+            temperature=0.7,
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_input}
+            ]
+        )
+
+        # Claude3 Opusからの応答を表示
+        response_text = ''.join(block.text for block in response.content)
+        print(f"Claude3: {response_text}")
+    except KeyboardInterrupt:
+        print("\nCtrl+Cが押されました。プログラムを終了します。")
+        sys.exit()
